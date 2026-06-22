@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>退助くん 〜自由民権ものしり問答〜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Maru+Gothic:wght@500;700;900&family=Klee+One:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --kon:#13243f;        /* 紺（明治の洋装） */
+    --kon2:#1b3052;
+    --kin:#d9a441;        /* 金 */
+    --kin-akarui:#f2cd6b;
+    --aka:#b03a2e;        /* 朱（自由の旗） */
+    --aka-fuka:#7d241c;
+    --washi:#f5efe0;      /* 生成り紙 */
+    --washi-kage:#e7dcc4;
+    --ai:#3a6ea5;         /* 藍 */
+    --washi-usu:rgba(245,239,224,.7);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    font-family:'Zen Maru Gothic',sans-serif;
+    background:
+      radial-gradient(ellipse at 50% -10%, #234269 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 120%, #0d1a30 0%, transparent 55%),
+      var(--kon);
+    color:var(--washi);
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    overflow-x:hidden;
+    position:relative;
+  }
+  /* 紙テクスチャ風のノイズ */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
+    pointer-events:none;z-index:0;
+  }
+
+  /* ヘッダー（旗風） */
+  header{
+    position:relative;z-index:2;
+    text-align:center;
+    padding:18px 16px 10px;
+    border-bottom:3px solid var(--kin);
+    background:linear-gradient(180deg, rgba(176,58,46,.30), transparent);
+  }
+  .mon{
+    display:inline-flex;align-items:center;gap:14px;
+  }
+  .mon-maru{
+    width:46px;height:46px;border-radius:50%;
+    border:3px solid var(--kin);
+    display:grid;place-items:center;
+    font-family:'Yuji Syuku',serif;font-size:24px;color:var(--kin-akarui);
+    background:radial-gradient(circle,#234269,#13243f);
+  }
+  h1{
+    font-family:'Yuji Syuku',serif;
+    font-size:clamp(28px,4.2vw,52px);
+    color:var(--kin-akarui);
+    letter-spacing:.12em;
+    text-shadow:0 2px 0 #000,0 0 18px rgba(217,164,65,.35);
+  }
+  .sub{
+    font-size:clamp(13px,1.5vw,18px);
+    color:var(--washi-usu);
+    margin-top:4px;letter-spacing:.18em;
+  }
+
+  /* メイン舞台 */
+  main{
+    position:relative;z-index:2;
+    flex:1;
+    width:min(1100px,94vw);
+    margin:0 auto;
+    padding:22px 0 30px;
+    display:flex;flex-direction:column;gap:20px;
+  }
+
+  /* 退助の語り場 */
+  .stage{
+    display:flex;align-items:flex-start;gap:22px;
+  }
+  .taisuke{
+    flex:0 0 auto;
+    width:clamp(120px,15vw,180px);
+    text-align:center;
+  }
+  .face{
+    width:clamp(120px,15vw,180px);
+    height:clamp(120px,15vw,180px);
+    border-radius:50%;
+    overflow:hidden;
+    background:#1b3052;
+    border:5px solid var(--kin);
+    box-shadow:0 0 0 4px var(--kon),0 10px 30px rgba(0,0,0,.5);
+    position:relative;
+    transition:transform .25s;
+  }
+  .face .mouth{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .face .mouth.closed{z-index:1;}
+  .face .mouth.open{z-index:2;opacity:0;}   /* ふだんは閉じた口。話すとき重ねて見せる */
+  .face.talking-open .mouth.open{opacity:1;}
+  .face.no-img .mouth{display:none;}
+  .face-fallback{
+    display:none;
+    position:absolute;inset:0;z-index:3;
+    width:100%;height:100%;
+    align-items:center;justify-content:center;
+    font-family:'Yuji Syuku',serif;
+    font-size:clamp(20px,2.6vw,32px);line-height:1.15;
+    color:var(--kin-akarui);letter-spacing:.05em;
+    background:radial-gradient(circle at 50% 38%, #234269, #13243f);
+  }
+  .face.no-img .face-fallback{display:flex;}
+  .face.talk{} /* 話し始めの顔の動きはなし */
+  .name-tag{
+    margin-top:10px;font-family:'Yuji Syuku',serif;
+    font-size:clamp(16px,2vw,24px);color:var(--kin-akarui);letter-spacing:.1em;
+  }
+
+  /* 吹き出し */
+  .scroll{
+    flex:1;position:relative;
+    background:linear-gradient(180deg,var(--washi),var(--washi-kage));
+    color:var(--kon);
+    border-radius:14px;
+    padding:26px 30px;
+    min-height:170px;
+    box-shadow:0 12px 34px rgba(0,0,0,.45),inset 0 0 0 3px rgba(176,58,46,.20);
+    border:2px solid var(--kin);
+  }
+  .scroll::before{ /* 吹き出しのしっぽ */
+    content:"";position:absolute;left:-18px;top:48px;
+    border-style:solid;border-width:14px 18px 14px 0;
+    border-color:transparent var(--kin) transparent transparent;
+  }
+  .scroll .answer{
+    font-family:'Klee One',serif;
+    font-size:clamp(20px,2.6vw,32px);
+    line-height:1.75;font-weight:600;
+    letter-spacing:.02em;
+  }
+  .scroll .answer .em{color:var(--aka-fuka);font-weight:700;}
+
+  /* 質問エリア */
+  .ask-zone{
+    background:rgba(27,48,82,.7);
+    border:2px solid var(--kin);
+    border-radius:14px;
+    padding:18px 20px;
+  }
+  .ask-zone .label{
+    font-size:clamp(15px,1.7vw,20px);color:var(--kin-akarui);
+    margin-bottom:12px;letter-spacing:.1em;font-weight:700;
+  }
+  .input-row{display:flex;gap:12px;flex-wrap:wrap;}
+  #q{
+    flex:1;min-width:220px;
+    font-family:'Zen Maru Gothic',sans-serif;
+    font-size:clamp(18px,2.2vw,26px);font-weight:500;
+    padding:14px 18px;border-radius:10px;border:none;
+    background:var(--washi);color:var(--kon);
+  }
+  #q:focus{outline:3px solid var(--kin-akarui);}
+  .btn-ask{
+    font-family:'Yuji Syuku',serif;
+    font-size:clamp(18px,2.2vw,26px);
+    padding:14px 28px;border:none;border-radius:10px;cursor:pointer;
+    background:linear-gradient(180deg,var(--aka),var(--aka-fuka));
+    color:var(--washi);letter-spacing:.1em;
+    box-shadow:0 4px 0 #511712,0 6px 14px rgba(0,0,0,.4);
+    transition:transform .08s;
+  }
+  .btn-ask:active{transform:translateY(4px);box-shadow:0 1px 0 #511712;}
+
+  /* おすすめ問い */
+  .topics{margin-top:8px;}
+  .topics .t-label{font-size:clamp(13px,1.5vw,17px);color:var(--washi-usu);margin:6px 2px 12px;letter-spacing:.08em;}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;}
+  .chip{
+    font-family:'Zen Maru Gothic',sans-serif;font-weight:700;
+    font-size:clamp(15px,1.8vw,21px);
+    padding:11px 18px;border-radius:999px;cursor:pointer;
+    background:rgba(245,239,224,.08);
+    color:var(--washi);
+    border:2px solid var(--kin);
+    transition:all .15s;
+  }
+  .chip:hover{background:var(--kin);color:var(--kon);transform:translateY(-2px);}
+
+  .panel{display:none;}
+  .panel.show{display:block;}
+
+  /* タブ（モード切りかえ） */
+  .tabs{
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+    margin-bottom:4px;
+  }
+  .tab{
+    font-family:'Yuji Syuku',serif;
+    font-size:clamp(15px,1.9vw,22px);
+    padding:10px 22px;border-radius:999px;cursor:pointer;
+    background:rgba(245,239,224,.06);
+    color:var(--washi);
+    border:2px solid var(--kin);
+    transition:all .15s;letter-spacing:.06em;
+  }
+  .tab:hover{transform:translateY(-2px);}
+  .tab.active{background:linear-gradient(180deg,var(--aka),var(--aka-fuka));color:var(--washi);box-shadow:0 4px 0 #511712;}
+
+  /* 顔のリアクション */
+  .face.seikai{box-shadow:0 0 0 4px var(--kon),0 0 34px 6px rgba(217,164,65,.85),0 10px 30px rgba(0,0,0,.5);}
+  .face.zannen{box-shadow:0 0 0 4px var(--kon),0 0 30px 5px rgba(176,58,46,.8),0 10px 30px rgba(0,0,0,.5);}
+
+  /* ===== クイズ ===== */
+  .quiz-box{
+    background:rgba(27,48,82,.7);
+    border:2px solid var(--kin);
+    border-radius:14px;
+    padding:22px 24px;
+  }
+  .quiz-head{
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:8px;margin-bottom:14px;
+  }
+  .quiz-count{font-family:'Yuji Syuku',serif;font-size:clamp(15px,1.8vw,20px);color:var(--kin-akarui);letter-spacing:.08em;}
+  .quiz-score{font-size:clamp(14px,1.6vw,18px);color:var(--washi-usu);}
+  .quiz-q{
+    font-family:'Klee One',serif;font-weight:600;
+    font-size:clamp(18px,2.3vw,26px);line-height:1.6;
+    color:var(--washi);margin-bottom:18px;
+  }
+  .quiz-opts{display:flex;flex-direction:column;gap:12px;}
+  .opt{
+    font-family:'Zen Maru Gothic',sans-serif;font-weight:700;
+    font-size:clamp(16px,1.9vw,22px);text-align:left;
+    padding:14px 18px;border-radius:10px;cursor:pointer;
+    background:var(--washi);color:var(--kon);
+    border:3px solid transparent;
+    transition:all .12s;
+  }
+  .opt:hover{transform:translateX(4px);}
+  .opt:disabled{cursor:default;}
+  .opt.correct{background:#cfe6c0;border-color:var(--midori,#5c7a4a);color:#2c3a22;}
+  .opt.wrong{background:#efc9c4;border-color:var(--aka);color:#5a1c15;}
+  .opt.dim{opacity:.55;}
+  .quiz-feedback{
+    margin-top:16px;font-family:'Klee One',serif;font-weight:600;
+    font-size:clamp(15px,1.8vw,21px);line-height:1.6;color:var(--kin-akarui);
+    min-height:1.5em;
+  }
+  .quiz-foot{margin-top:18px;text-align:right;}
+  .quiz-next{
+    font-family:'Yuji Syuku',serif;font-size:clamp(16px,1.9vw,22px);
+    padding:11px 26px;border:none;border-radius:10px;cursor:pointer;
+    background:linear-gradient(180deg,var(--aka),var(--aka-fuka));
+    color:var(--washi);letter-spacing:.08em;
+    box-shadow:0 4px 0 #511712;transition:transform .08s;
+  }
+  .quiz-next:active{transform:translateY(4px);box-shadow:0 1px 0 #511712;}
+  .quiz-result{text-align:center;padding:10px 0;}
+  .quiz-result .big{font-family:'Yuji Syuku',serif;font-size:clamp(26px,4vw,44px);color:var(--kin-akarui);margin:6px 0 12px;}
+  .quiz-result .msg{font-family:'Klee One',serif;font-weight:600;font-size:clamp(17px,2.1vw,24px);line-height:1.7;color:var(--washi);margin-bottom:20px;}
+
+  /* ===== 年表 ===== */
+  .nenpyo{
+    background:rgba(27,48,82,.55);
+    border:2px solid var(--kin);
+    border-radius:14px;
+    padding:24px 26px;
+  }
+  .nenpyo h2,.soukan h2{
+    font-family:'Yuji Syuku',serif;color:var(--kin-akarui);
+    font-size:clamp(20px,2.6vw,30px);letter-spacing:.08em;
+    text-align:center;margin-bottom:20px;
+  }
+  .nenpyo-hint{
+    text-align:center;color:var(--washi-usu);
+    font-size:clamp(13px,1.6vw,17px);margin:-10px 0 18px;letter-spacing:.04em;
+  }
+  .tl{position:relative;margin-left:8px;padding-left:26px;}
+  .tl::before{
+    content:"";position:absolute;left:6px;top:6px;bottom:6px;width:3px;
+    background:linear-gradient(180deg,var(--kin),var(--aka));border-radius:2px;
+  }
+  .tl-item{position:relative;margin-bottom:22px;cursor:pointer;border-radius:10px;padding:6px 10px;margin-left:-10px;transition:background .15s;}
+  .tl-item:hover{background:rgba(245,239,224,.10);}
+  .tl-item:hover .tl-year{text-decoration:underline;}
+  .tl-item::before{
+    content:"";position:absolute;left:-25px;top:6px;
+    width:13px;height:13px;border-radius:50%;
+    background:var(--kin-akarui);border:3px solid var(--aka-fuka);
+    box-shadow:0 0 0 3px rgba(245,239,224,.15);
+  }
+  .tl-year{
+    font-family:'Yuji Syuku',serif;color:var(--kin-akarui);
+    font-size:clamp(16px,2vw,23px);letter-spacing:.05em;
+  }
+  .tl-age{font-size:clamp(12px,1.4vw,15px);color:var(--washi-usu);margin-left:8px;}
+  .tl-body{
+    font-family:'Klee One',serif;font-weight:600;
+    font-size:clamp(15px,1.8vw,20px);line-height:1.6;
+    color:var(--washi);margin-top:4px;
+  }
+
+  /* ===== 人物相関図 ===== */
+  .soukan{
+    background:rgba(27,48,82,.55);
+    border:2px solid var(--kin);
+    border-radius:14px;
+    padding:22px 18px;
+  }
+  .soukan-wrap{width:100%;overflow-x:auto;}
+  .soukan svg{display:block;width:100%;height:auto;min-width:560px;}
+  .sk-line{stroke:var(--kin);stroke-width:2.5;opacity:.7;}
+  .sk-rel{font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:14px;fill:var(--kin-akarui);}
+  .sk-node-c{fill:url(#cgrad);stroke:var(--kin);stroke-width:4;}
+  .sk-node{fill:#1b3052;stroke:var(--kin);stroke-width:2.5;}
+  .sk-clickable{transition:opacity .15s;}
+  .sk-clickable:hover{opacity:.82;}
+  .sk-clickable:hover .sk-node{stroke:var(--kin-akarui);stroke-width:4;}
+  .sk-clickable:hover .sk-node-c{stroke:var(--kin-akarui);stroke-width:6;}
+  .sk-name{font-family:'Yuji Syuku',serif;fill:var(--washi);text-anchor:middle;}
+  .sk-cname{font-family:'Yuji Syuku',serif;fill:var(--kin-akarui);text-anchor:middle;font-weight:700;}
+  .sk-sub{font-family:'Zen Maru Gothic',sans-serif;fill:var(--washi-usu);text-anchor:middle;font-size:12px;}
+  .soukan-legend{
+    margin-top:14px;font-family:'Klee One',serif;font-weight:600;
+    font-size:clamp(13px,1.6vw,17px);line-height:1.7;color:var(--washi-usu);text-align:center;
+  }
+
+  /* ===== クラス国会 ===== */
+  .kokkai{
+    background:rgba(27,48,82,.55);
+    border:2px solid var(--kin);
+    border-radius:14px;
+    padding:24px 22px;
+  }
+  .kokkai h2{
+    font-family:'Yuji Syuku',serif;color:var(--kin-akarui);
+    font-size:clamp(20px,2.6vw,30px);letter-spacing:.08em;text-align:center;margin-bottom:8px;
+  }
+  .kk-card{
+    background:rgba(245,239,224,.05);
+    border:2px solid rgba(217,164,65,.5);
+    border-radius:12px;padding:20px 18px;margin-top:16px;
+  }
+  .kk-label{
+    display:block;font-family:'Yuji Syuku',serif;color:var(--kin-akarui);
+    font-size:clamp(14px,1.7vw,19px);letter-spacing:.06em;margin-bottom:8px;
+  }
+  .kk-input{
+    width:100%;font-family:'Zen Maru Gothic',sans-serif;font-weight:500;
+    font-size:clamp(16px,2vw,23px);padding:12px 16px;border-radius:10px;border:none;
+    background:var(--washi);color:var(--kon);
+  }
+  .kk-input:focus{outline:3px solid var(--kin-akarui);}
+  .kk-choice-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;}
+  .kk-choice{flex:1;min-width:160px;}
+  .kk-start,.kk-decide,.kk-reset{
+    font-family:'Yuji Syuku',serif;font-size:clamp(17px,2.1vw,24px);
+    padding:13px 26px;border:none;border-radius:10px;cursor:pointer;letter-spacing:.08em;
+    transition:transform .08s;
+  }
+  .kk-start{
+    display:block;width:100%;margin-top:20px;
+    background:linear-gradient(180deg,var(--aka),var(--aka-fuka));color:var(--washi);
+    box-shadow:0 4px 0 #511712;
+  }
+  .kk-start:active,.kk-decide:active,.kk-reset:active{transform:translateY(4px);box-shadow:0 1px 0 #511712;}
+  .kk-ex{margin-top:22px;}
+  .kk-ex-label{display:block;font-size:clamp(13px,1.5vw,16px);color:var(--washi-usu);margin-bottom:10px;letter-spacing:.06em;}
+  #kkExChips .chip{font-size:clamp(13px,1.6vw,17px);padding:9px 14px;}
+
+  .kk-topic{
+    font-family:'Klee One',serif;font-weight:600;
+    font-size:clamp(19px,2.5vw,28px);line-height:1.5;color:var(--washi);
+    text-align:center;background:rgba(176,58,46,.22);
+    border:2px solid var(--kin);border-radius:10px;padding:14px 16px;margin-bottom:14px;
+  }
+  .kk-hint2,.kk-total{text-align:center;color:var(--washi-usu);font-size:clamp(13px,1.6vw,17px);}
+  .kk-hint2{margin-bottom:18px;}
+  .kk-vote-grid{display:flex;gap:16px;flex-wrap:wrap;}
+  .kk-col{
+    flex:1;min-width:150px;text-align:center;border-radius:12px;padding:18px 12px;
+    border:3px solid;
+  }
+  .kk-col.a{background:rgba(58,110,165,.22);border-color:var(--ai);}
+  .kk-col.b{background:rgba(176,58,46,.20);border-color:var(--aka);}
+  .kk-name{
+    font-family:'Yuji Syuku',serif;font-size:clamp(18px,2.3vw,26px);
+    color:var(--washi);margin-bottom:6px;word-break:break-word;
+  }
+  .kk-tally{
+    font-family:'Yuji Syuku',serif;font-size:clamp(46px,9vw,80px);
+    color:var(--kin-akarui);line-height:1.05;margin:4px 0 12px;
+  }
+  .kk-btn-row{display:flex;gap:8px;justify-content:center;align-items:stretch;}
+  .kk-plus{
+    flex:1;font-family:'Zen Maru Gothic',sans-serif;font-weight:700;
+    font-size:clamp(16px,2vw,22px);padding:12px 10px;border:none;border-radius:10px;cursor:pointer;
+    background:linear-gradient(180deg,var(--kin),#b9862e);color:var(--kon);
+    box-shadow:0 4px 0 #7a5818;transition:transform .06s;
+  }
+  .kk-plus:active{transform:translateY(4px);box-shadow:0 1px 0 #7a5818;}
+  .kk-minus{
+    width:54px;font-family:'Zen Maru Gothic',sans-serif;font-weight:700;
+    font-size:clamp(18px,2.2vw,24px);border:2px solid var(--kin);border-radius:10px;cursor:pointer;
+    background:rgba(245,239,224,.08);color:var(--washi);
+  }
+  .kk-total{margin-top:16px;font-family:'Yuji Syuku',serif;font-size:clamp(15px,1.8vw,21px);color:var(--kin-akarui);}
+  .kk-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:20px;}
+  .kk-decide{background:linear-gradient(180deg,var(--aka),var(--aka-fuka));color:var(--washi);box-shadow:0 4px 0 #511712;}
+  .kk-reset{background:rgba(245,239,224,.08);color:var(--washi);border:2px solid var(--kin);box-shadow:none;}
+  .kk-reset:active{transform:translateY(2px);}
+
+  /* 結果バー */
+  .kk-bars{display:flex;flex-direction:column;gap:16px;margin:6px 0 18px;}
+  .kk-bar-row{}
+  .kk-bar-top{display:flex;justify-content:space-between;font-family:'Yuji Syuku',serif;font-size:clamp(15px,1.9vw,21px);color:var(--washi);margin-bottom:6px;}
+  .kk-bar-track{background:rgba(245,239,224,.10);border-radius:999px;height:34px;overflow:hidden;border:2px solid rgba(217,164,65,.5);}
+  .kk-bar-fill{height:100%;border-radius:999px;transition:width .9s cubic-bezier(.2,.8,.2,1);min-width:2px;}
+  .kk-bar-fill.a{background:linear-gradient(90deg,#3a6ea5,#5a8cc4);}
+  .kk-bar-fill.b{background:linear-gradient(90deg,#b03a2e,#d05a4a);}
+  .kk-verdict{
+    font-family:'Klee One',serif;font-weight:600;text-align:center;
+    font-size:clamp(19px,2.6vw,30px);line-height:1.5;color:var(--kin-akarui);
+    padding:14px;border:2px solid var(--kin);border-radius:10px;background:rgba(217,164,65,.10);
+  }
+
+  footer{
+    position:relative;z-index:2;text-align:center;
+    font-size:13px;color:rgba(245,239,224,.4);
+    padding:14px;letter-spacing:.1em;
+  }
+  @media(max-width:560px){
+    .stage{flex-direction:column;align-items:center;}
+    .scroll::before{display:none;}
+    .taisuke{order:-1;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="mon">
+      <span class="mon-maru">自</span>
+      <div>
+        <h1>退助くん</h1>
+        <div class="sub">じゆうみんけん ものしり もんどう</div>
+      </div>
+      <span class="mon-maru">由</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="qa">問答</button>
+      <button class="tab" data-tab="quiz">クイズ</button>
+      <button class="tab" data-tab="nenpyo">年表</button>
+      <button class="tab" data-tab="soukan">人物相関図</button>
+      <button class="tab" data-tab="kokkai">クラス国会</button>
+    </div>
+
+    <div class="stage">
+      <div class="taisuke">
+        <div class="face" id="face">
+          <img class="mouth closed" src="https://github.com/byakusen/ffjoge.taisuke_kun/blob/main/taisuke.png?raw=true" alt="板垣退助"
+               onerror="this.closest('.face').classList.add('no-img');">
+          <img class="mouth open" src="https://github.com/byakusen/ffjoge.taisuke_kun/blob/main/taisuke2.png?raw=true" alt="" aria-hidden="true">
+          <span class="face-fallback">板<br>垣<br>退<br>助</span>
+        </div>
+        <div class="name-tag">板垣退助</div>
+      </div>
+      <div class="scroll">
+        <div class="answer" id="answer"></div>
+      </div>
+    </div>
+
+    <!-- ① 問答 -->
+    <div class="panel show" id="panel-qa">
+      <div class="ask-zone">
+        <div class="label">▼ 退助くんに きいてみよう</div>
+        <div class="input-row">
+          <input id="q" type="text" placeholder="しつもんを 入力してね（れい：自由民権運動ってなに？）" autocomplete="off">
+          <button class="btn-ask" id="askBtn">きく</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② クイズ -->
+    <div class="panel" id="panel-quiz">
+      <div class="quiz-box" id="quizBox"></div>
+    </div>
+
+    <!-- ③ 年表 -->
+    <div class="panel" id="panel-nenpyo">
+      <div class="nenpyo">
+        <h2>板垣退助 年表</h2>
+        <div class="nenpyo-hint">▼ 年（行）をクリック（タップ）すると、退助くんがそのできごとを話します</div>
+        <div class="tl" id="timeline"></div>
+      </div>
+    </div>
+
+    <!-- ④ 人物相関図 -->
+    <div class="panel" id="panel-soukan">
+      <div class="soukan">
+        <h2>板垣退助をめぐる人びと</h2>
+        <div class="soukan-wrap">
+          <svg viewBox="0 0 760 560" xmlns="http://www.w3.org/2000/svg" id="soukanSvg" role="img" aria-label="板垣退助 人物相関図">
+            <defs>
+              <radialGradient id="cgrad" cx="50%" cy="40%" r="70%">
+                <stop offset="0%" stop-color="#3a6ea5"/>
+                <stop offset="100%" stop-color="#13243f"/>
+              </radialGradient>
+            </defs>
+            <g id="skLines"></g>
+            <g id="skNodes"></g>
+          </svg>
+        </div>
+        <div class="soukan-legend">中央が板垣退助。人物の丸をクリック（タップ）すると、退助くんがその人とのつながりを話します。</div>
+      </div>
+    </div>
+
+    <!-- ⑤ クラス国会 -->
+    <div class="panel" id="panel-kokkai">
+      <div class="kokkai">
+        <h2>クラス国会</h2>
+        <div class="nenpyo-hint">議題（ぎだい）を決めて、賛成・反対を数えよう。「国会を創った男」退助くんが議長（ぎちょう）をつとめます。</div>
+
+        <!-- 設定 -->
+        <div class="kk-card" id="kkSetup">
+          <label class="kk-label">▼ 議題（みんなで決めたいこと）</label>
+          <input id="kkTopic" class="kk-input" placeholder="れい：給食のおかわりは じゃんけんで 決めよう" autocomplete="off">
+          <div class="kk-choice-row">
+            <div class="kk-choice">
+              <label class="kk-label">① 一つめの考え</label>
+              <input id="kkA" class="kk-input" value="賛成">
+            </div>
+            <div class="kk-choice">
+              <label class="kk-label">② 二つめの考え</label>
+              <input id="kkB" class="kk-input" value="反対">
+            </div>
+          </div>
+          <button class="kk-start" id="kkStart">国会を ひらく</button>
+          <div class="kk-ex">
+            <span class="kk-ex-label">▼ 議題のれい（タップで入る）</span>
+            <div class="chips" id="kkExChips"></div>
+          </div>
+        </div>
+
+        <!-- 投票 -->
+        <div class="kk-card" id="kkVote" style="display:none;">
+          <div class="kk-topic" id="kkTopicShow"></div>
+          <div class="kk-hint2">▼ 「賛成の人？」と聞いて、手をあげた数だけボタンを押そう（一人ずつ押してもOK）</div>
+          <div class="kk-vote-grid">
+            <div class="kk-col a">
+              <div class="kk-name" id="kkNameA">賛成</div>
+              <div class="kk-tally" id="kkTallyA">0</div>
+              <div class="kk-btn-row">
+                <button class="kk-minus" data-side="a">－</button>
+                <button class="kk-plus" data-side="a">＋ 1ぴょう</button>
+              </div>
+            </div>
+            <div class="kk-col b">
+              <div class="kk-name" id="kkNameB">反対</div>
+              <div class="kk-tally" id="kkTallyB">0</div>
+              <div class="kk-btn-row">
+                <button class="kk-minus" data-side="b">－</button>
+                <button class="kk-plus" data-side="b">＋ 1ぴょう</button>
+              </div>
+            </div>
+          </div>
+          <div class="kk-total" id="kkTotal">合計 0ひょう</div>
+          <div class="kk-actions">
+            <button class="kk-decide" id="kkDecide">さいけつ！（けっか発表）</button>
+            <button class="kk-reset" id="kkReset">べつの議題にする</button>
+          </div>
+        </div>
+
+        <!-- 結果 -->
+        <div class="kk-card" id="kkResult" style="display:none;">
+          <div class="kk-topic" id="kkResTopic"></div>
+          <div class="kk-bars" id="kkBars"></div>
+          <div class="kk-verdict" id="kkVerdict"></div>
+          <div class="kk-actions">
+            <button class="kk-decide" id="kkAgain">この議題を もう一度</button>
+            <button class="kk-reset" id="kkReset2">べつの議題にする</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  </main>
+
+  <footer>クラスで楽しむ 自由民権もんどうアプリ／答えは小学生むけにやさしくまとめています</footer>
+
+<script>
+// ===== 退助の知識（小学4年生むけ・退助口調） =====
+// キーワードに当てはまる問いが来たら、その答えを返す。
+const KB = [
+  // ===== 生い立ち・名前 =====
+  {
+    keys:["生まれ","うまれ","いつ生","何年生","誕生","どこで生","生年"],
+    a:"わしが生まれたのは1837年(天保8年)、土佐藩(とさはん)――いまの高知県(こうちけん)じゃ。高知城下の中島町(なかじまちょう)で、武士の家の長男としてこの世に生をうけた。あの徳川慶喜(とくがわよしのぶ)とちょうど同い年でな、まさに時代の変わり目を生きた者よ。"
+  },
+  {
+    keys:["幼名","ようみょう","猪之助","いのすけ","小さいころの名","子どもの名"],
+    a:"子どものころの名は「猪之助(いのすけ)」じゃ。「退助(たいすけ)」は通称(つうしょう)でな。大人になってから名のった名よ。今みなが知る「板垣退助」という名は、わしが世のために働いた一生をあらわす名となったのじゃ。"
+  },
+  {
+    keys:["乾","いぬい","姓を変え","改姓","かいせい","もとの名字","名字を変え","板垣にした"],
+    a:"わしはもともと「乾(いぬい)退助」と名のっておった。乾家の本当の姓(本姓)は「板垣」でな。戊辰戦争(ぼしんせんそう)のとき、ご先祖ゆかりの会津をせめるにあたり、人々の心をまとめるため、由緒ある「板垣」の姓にもどしたのじゃ。それからは「板垣退助」じゃ。"
+  },
+  {
+    keys:["板垣信方","のぶかた","先祖","せんぞ","ご先祖","武田","しんげん","信玄の家臣"],
+    a:"わしのご先祖は、戦国の名将・武田信玄(たけだしんげん)につかえた重臣、板垣信方(いたがきのぶかた)じゃ。信方は信玄を支えた立派な武士でな。その名をうけついだことを、わしは誇りに思うておった。古い武士の血が、わしの中にも流れておるのよ。"
+  },
+  {
+    keys:["父","ちち","おとう","正成","まさしげ","父親"],
+    a:"わしの父は乾正成(いぬいまさしげ)じゃ。300石(こく)の土佐藩士で、まじめで質素(しっそ)な家風(かふう)を大事にする人であった。ぜいたくをきらい、貧しさを苦にせぬ心――それを父母からさずかったことが、のちに私財をなげうって世のためにつくす力になったのじゃ。"
+  },
+  {
+    keys:["母","はは","おかあ","幸子","さちこ","母親","林幸子"],
+    a:"わしの母は林幸子(はやしさちこ)という。わしが11さいのときに亡くなったが、その教えは一生わすれなんだ。「弱い者をいじめてはならぬ」「やるなら正しいことのために」と、きびしくも温かく育ててくれた。民(たみ)を思う心は、この母から学んだものよ。"
+  },
+  {
+    keys:["出身","しゅっしん","どこの人","土佐","とさ","高知","こうち","ふるさと","生まれた所"],
+    a:"わしは土佐藩(とさはん)――いまの高知県の出身じゃ。坂本龍馬(さかもとりょうま)とおなじ土佐の生まれよ。海と山にかこまれた土佐の人は、気性がまっすぐで、自由をこのむ。そんな土佐の風土が、わしという人間をつくったのじゃ。"
+  },
+  {
+    keys:["龍馬","りょうま","坂本","さかもと","坂本龍馬"],
+    a:"坂本龍馬(さかもとりょうま)とは、じつは親せきにあたる。おなじ土佐の生まれでな。龍馬は世のしくみを大きく変えようと走りまわった男よ。わしもまた、新しい世をつくろうとした一人。土佐は、こうした志(こころざし)ある者を多く生んだ土地なのじゃ。"
+  },
+  {
+    keys:["武市","たけち","瑞山","ずいざん","半平太","土佐勤王党の","武市半平太"],
+    a:"武市瑞山(たけちずいざん。半平太とも)も、わしの親せきじゃ。土佐勤王党(とさきんのうとう)をひきいた人物でな。天皇をうやまい、世を正そうとした。わしも勤王党に名をつらねておった。志をおなじくする仲間が、土佐にはおおぜいおったのよ。"
+  },
+  {
+    keys:["慶喜","よしのぶ","徳川慶喜","同い年","おないどし","最後の将軍"],
+    a:"江戸幕府さいごの将軍・徳川慶喜(とくがわよしのぶ)とは、ふしぎなことにおなじ年の生まれじゃ。かたや幕府をとじた将軍、かたや新しい世で国会をつくろうとした男。おなじ時代に生まれながら、ずいぶんちがう道を歩んだものよのう。"
+  },
+
+  // ===== 子ども時代 =====
+  {
+    keys:["後藤象二郎","ごとうしょうじろう","象二郎","しょうじろう","親友","しんゆう","竹馬の友","幼なじみ"],
+    a:"後藤象二郎(ごとうしょうじろう)は、わしの竹馬(ちくば)の友――小さいころからの大の親友じゃ。たがいに「いのす」「やす」と呼びあう仲でな。鏡川(かがみがわ)で泳ぎ、野山をかけまわって遊んだ。大人になってもともに国のために働いた、生涯の友よ。"
+  },
+  {
+    keys:["いたずら","蛇","へび","犬の糞","ふん","びっくり","おどかし","子どものいたずら"],
+    a:"子どものころは、なかなかのいたずらっ子でな。蛇(へび)がきらいな後藤象二郎をおどかそうと、ひもでしばった青大将(あおだいしょう)を棒の先にぶら下げて追いかけた。すると怒った後藤が、道におちていた犬の糞(ふん)をつかんで投げ返してきた。きれい好きのわしは「卑怯(ひきょう)なり!」と、たちまち降参したわ。はっはっは。"
+  },
+  {
+    keys:["きれい好き","潔癖","けっぺき","手を洗","きれいずき","洗いすぎ"],
+    a:"わしは子どものころから、たいそうなきれい好きでな。手を洗うのに、たらいの水を二はいも使うほどであった。それゆえ、後藤象二郎の「犬の糞こうげき」には、ほとほと弱ったものよ。今思えば、笑い話じゃがな。"
+  },
+  {
+    keys:["迷信","めいしん","蝦蟇の油","がまの油","ためし","実験","じっけん","本当か試"],
+    a:"わしは小さいころから「本当かどうか、自分でたしかめたい」性分(しょうぶん)でな。「がまの油をぬれば水の中でも息ができる」と聞けば、後藤象二郎とかえるを煮(に)て油を作り、川にもぐって試した。もちろん息などできず、ただのうそと分かった。何でも自分でためす――これがわしのやり方じゃ。"
+  },
+  {
+    keys:["お守り","おまもり","厠","かわや","神罰","ばち","捨てた","信じない"],
+    a:"「お守りを捨てたら本当にばちが当たるのか」――そんなことまで、わしは試したくなる子じゃった。お守りを厠(かわや、トイレ)に捨ててみたのよ。すると後日、川で泳いで耳に水が入り、耳が聞こえにくくなった。「ばちが当たった!」と、まわりは大さわぎよ。はて、本当のところはどうかのう。"
+  },
+  {
+    keys:["耳","みみ","難聴","なんちょう","聞こえ","聴力","耳が悪","中耳炎"],
+    a:"わしは少年のころ、鏡川(かがみがわ)で泳いだとき耳に水が入り、耳をわずらった。数年のあいだ、よく聞こえぬ時期がつづいてな、塾(じゅく)にも通えなんだ。じゃがこの苦労があったからこそ、後年、目や耳の不自由な人を助ける仕事に力を入れたのじゃ。つらい経験も、むだにはならぬものよ。"
+  },
+  {
+    keys:["着物","きもの","貧しい","まずしい","物乞い","ものごい","女の人にあげ","やさしい話"],
+    a:"真冬のある日、赤んぼうをかかえた貧しい女の人が、家の門に物乞いに来た。わしは姉のたんすから着物を一枚とって、その人にあげた。姉は怒ったが、母はこう言うてほめた――「民(たみ)を思う心こそ、国の大本(おおもと)。この子は将来きっと家の名をあげる」とな。幼いころのこのできごとが、わしの一生をきめたのかもしれぬ。"
+  },
+  {
+    keys:["母の教え","ははの教え","喧嘩","けんか","弱い者いじめ","いじめ","教育","しつけ"],
+    a:"母はわしに、こう教えた。「喧嘩(けんか)をしても、弱い者をいじめてはならぬ」。そして喧嘩に負けて帰れば「男なら、やるからには勝て」としかった。強い者にはひるまず、弱い者にはやさしく――この教えが、のちに権力に立ち向かい、民の味方となる土台になったのじゃ。"
+  },
+  {
+    keys:["餓鬼大将","がきだいしょう","親分","おやぶん","子分","リーダー","したわれ"],
+    a:"わしは子どものころ、餓鬼大将(がきだいしょう)であった。身分の上下に関係なく、弱い者いじめをする者にはまっこうから立ち向かう。だから多くの子分(こぶん)がわしをしたってくれた。身分でなく、その人の中身で人を見る――この気性は、一生かわらなんだのよ。"
+  },
+  {
+    keys:["好物","こうぶつ","好きな食べ物","食べ物","たべもの","鮎","あゆ","半熟卵","はんじゅく","卵"],
+    a:"わしの好物は、鮎(あゆ)の塩焼きと、半熟卵(はんじゅくたまご)じゃ。鮎は、ふるさとの鏡川でとれたものをよく食べた。ぜいたくな料理よりも、こうしたそぼくな味が、わしの口にはいちばん合うておった。質素(しっそ)を旨(むね)とする、土佐の武士らしいであろう。"
+  },
+
+  // ===== 青年期 =====
+  {
+    keys:["神田村","こうだむら","謫居","たっきょ","追放","ついほう","村に","罰","ばつ"],
+    a:"若いころ、わしはもめごとにかかわって罰をうけ、神田村(こうだむら)という村に追放(ついほう)されたことがある。じゃがこの村で、わしは農民たちといっしょに麦をかり、汗を流した。身分のへだてなく庶民(しょみん)と交わったこの経験が、のちの「民を大事にする」考えのもとになったのじゃ。"
+  },
+  {
+    keys:["孫子","そんし","兵法","へいほう","独学","どくがく","勉強","学問","本を読"],
+    a:"耳が不自由で塾に通えなんだわしは、その代わりに、中国の古い兵法書『孫子(そんし)』を独学(どくがく)で読みこんだ。暗記(あんき)するほど熱中したものよ。学校に行けずとも、学ぶ道はある。自分でつかみとった学問は、戦(いくさ)のときも政治のときも、わしを大いに助けてくれた。"
+  },
+  {
+    keys:["居合","いあい","柔術","じゅうじゅつ","剣","武術","ぶじゅつ","強かった","達人"],
+    a:"わしは武術(ぶじゅつ)もよくはげんだ。居合(いあい)は無双直伝英信流(むそうじきでんえいしんりゅう)、柔術(じゅうじゅつ)は呑敵流(どんてきりゅう)の達人(たつじん)であったぞ。学問だけでなく、体もきたえる。文(ぶん)と武(ぶ)の両方をみがいてこそ、いざというとき世のために働けるのじゃ。"
+  },
+  {
+    keys:["江戸","えど","遊学","ゆうがく","勉強しに","江戸で学"],
+    a:"24さいのころ、わしは藩(はん)の命で江戸(えど。いまの東京)へ出て、学問をおさめた。若山勿堂(わかやまぶつどう)という学者に、儒学(じゅがく)や兵学(へいがく)を学んだのよ。広い世界を知ることで、土佐の一藩士であったわしの目は、しだいに日本全体へと開かれていったのじゃ。"
+  },
+  {
+    keys:["勤王党","きんのうとう","土佐勤王党","勤王","きんのう","尊皇","そんのう"],
+    a:"わしは若くして、武市瑞山がひきいる土佐勤王党(とさきんのうとう)に名をつらねた。天皇(てんのう)をうやまい、みだれた世を正そうという志(こころざし)ある者の集まりじゃ。天皇を敬う「尊皇(そんのう)」の心は、わしが一生つらぬいたものよ。"
+  },
+  {
+    keys:["中岡","なかおか","慎太郎","しんたろう","中岡慎太郎"],
+    a:"中岡慎太郎(なかおかしんたろう)との出会いは、わすれられぬ。じつは中岡は、かつてわしを暗殺しようとしたことがあってな。それを正直にうちあけた中岡に、わしは「それでこそ天下を語れる男じゃ」と感心し、たがいに心を開く仲となった。この縁(えん)が、のちの倒幕(とうばく)へとつながっていくのじゃ。"
+  },
+
+  // ===== 幕末・倒幕 =====
+  {
+    keys:["薩土密約","さっとみつやく","西郷と","薩摩と","同盟","どうめい","密約","みつやく"],
+    a:"1867年(慶応3年)、わしは京都で薩摩藩(さつまはん)の西郷隆盛(さいごうたかもり)と「薩土密約(さっとみつやく)」という軍事のやくそくを結んだ。力でもって古い幕府をたおす――その決意を、薩摩と土佐でかためたのじゃ。これが戊辰戦争(ぼしんせんそう)への大きな一歩となった。"
+  },
+  {
+    keys:["西郷","さいごう","隆盛","たかもり","西郷隆盛"],
+    a:"西郷隆盛(さいごうたかもり)は、薩摩のえらぶつでな。わしとともに古い世を変えようと手をむすんだ盟友(めいゆう)じゃ。のちに考えのちがいから、西郷は西南戦争(せいなんせんそう)で命を落とした。その死を見て、わしは「もう力ではない、言葉で世を変えるのだ」と心にちかったのよ。"
+  },
+  {
+    keys:["なぜ倒幕","どうして倒幕","討幕","とうばく","幕府をたお","なぜ戦","討幕の理由"],
+    a:"なぜ古い幕府をたおそうとしたか。それはな、戦(いくさ)でできあがった世のしくみは、戦でなければくつがえせぬ――そうわしは考えたからじゃ。みだれた世を正し、新しい日本をつくるため、わしはあえて武力(ぶりょく)でもって立ち上がったのよ。"
+  },
+  {
+    keys:["戊辰戦争","ぼしんせんそう","ぼしん","新政府軍","戦争で活躍","明治の戦い"],
+    a:"戊辰戦争(ぼしんせんそう。1868年〜)は、新しい明治政府の軍と、古い幕府の側との戦いじゃ。わしは土佐の軍をひきいる総督(そうとく)として、京都から東へと進軍した。甲州(こうしゅう)、会津(あいづ)へと転戦し、大きな手柄(てがら)を立てたのよ。"
+  },
+  {
+    keys:["迅衝隊","じんしょうたい","総督","そうとく","軍を率い","司令官","しれいかん"],
+    a:"戊辰戦争で、わしは土佐の精鋭(せいえい)「迅衝隊(じんしょうたい)」をひきいる総督(そうとく)であった。「迅(じん)」とは、はやいという意味。その名のとおり、すばやく強い軍であったぞ。近代式の調練(ちょうれん)をほどこした、わしじまんの兵たちよ。"
+  },
+  {
+    keys:["甲州","こうしゅう","勝沼","かつぬま","甲府","こうふ","山梨","近藤勇","新選組"],
+    a:"甲州勝沼(こうしゅうかつぬま。いまの山梨県)の戦いでは、わしは旧幕府方の軍を打ちやぶった。このとき相手をひきいておったのが、新選組(しんせんぐみ)の近藤勇(こんどういさみ)らじゃ。ご先祖・板垣信方ゆかりの甲斐(かい)の地で勝てたことは、わしにとって、ひとしお意味ぶかい戦いであったのよ。"
+  },
+  {
+    keys:["会津","あいづ","会津戦争","会津若松","若松城","鶴ヶ城","白虎隊"],
+    a:"会津(あいづ。いまの福島県)の戦いは、戊辰戦争でもっともはげしい戦いの一つであった。わしは軍をひきいて会津若松城(あいづわかまつじょう)をせめ落とした。多くの命がうしなわれた、悲しい戦いでもあった。戦の悲惨(ひさん)さを、わしはこの目でしかと見たのじゃ。"
+  },
+  {
+    keys:["日光","にっこう","東照宮","とうしょうぐう","守った","焼かなかった","文化財"],
+    a:"会津へ進む途中、日光東照宮(にっこうとうしょうぐう)が戦火(せんか)につつまれそうになった。じゃがわしは、この大切な建物を戦いから守ったのじゃ。たとえ敵がたの徳川家ゆかりの社(やしろ)であろうと、後の世に残すべき宝はこわさぬ。武人にも、まもるべき一線があるのよ。"
+  },
+  {
+    keys:["民衆を見て","民を見て","戦争で気づ","心動か","農民を見","人々の姿","考えが変わ"],
+    a:"戊辰戦争のさなか、わしは戦から逃げまどう、ふつうの人々の姿を、まのあたりにした。「武士だけの国ではいかん。民(たみ)あっての国ぞ」――そう心の底から思うたのじゃ。この気づきが、のちにわしを自由民権運動へとつきうごかした、大きなきっかけよ。"
+  },
+
+  // ===== 明治政府 =====
+  {
+    keys:["参与","さんよ","新政府に","政府の役人","明治政府で","役職","参議","さんぎ"],
+    a:"明治の新政府ができると、わしは戊辰戦争の手柄(てがら)をみとめられ、参与(さんよ)、そして参議(さんぎ)という高い役についた。「明治維新(めいじいしん)の元勲(げんくん)」――新しい世をつくった功労者(こうろうしゃ)の一人として、政治の中心で働いたのじゃ。"
+  },
+  {
+    keys:["内務大臣","ないむだいじん","大臣","だいじん","内務"],
+    a:"わしは内務大臣(ないむだいじん)を二度つとめた。内務大臣とは、国の中のさまざまな仕事をとりしきる、たいそう重い役じゃ。政府を一度はなれたわしが、ふたたび大臣になる――それだけ、わしの力が世にみとめられておった、ということよ。"
+  },
+  {
+    keys:["御親兵","ごしんぺい","近衛","このえ","天皇を守る軍","軍隊をつく","陸軍"],
+    a:"わしは天皇をお守りするための軍隊「御親兵(ごしんぺい)」をつくることに力をつくした。これがのちの近衛師団(このえしだん)、そして日本の陸軍のもとになった。自由を説くいっぽうで、国を守る備え(国防)も大事にする――それがわしの考えであったのよ。"
+  },
+  {
+    keys:["四民平等","しみんびょうどう","平等","びょうどう","人民平均","身分なくす","身分をなく"],
+    a:"わしは「人民平均(じんみんへいきん)の理(り)」をかかげ、身分の上下なく、みなが平等(びょうどう)であるべきだと説いた。武士も農民も町人も、おなじ国の民(たみ)じゃ。身分でなく、その人の力で世に立てる――そういう世こそ、わしの目ざしたものよ。"
+  },
+
+  // ===== 征韓論・下野 =====
+  {
+    keys:["征韓論","せいかんろん","政府をやめ","下野","げや","けんかして","対立してやめ"],
+    a:"1873年(明治6年)、政府の中で大きな意見の対立がおきた(征韓論政変)。わしは自分の考えがとおらず、政府の役をすて、ふるさと高知へ帰ったのじゃ。これを「下野(げや)」という。じゃがこのとき政府をはなれたことが、かえって自由民権運動という、わしの一生の大仕事へとつながったのよ。"
+  },
+  {
+    keys:["なぜ政府やめ","どうして政府","やめた理由","高知に帰","故郷に戻","土佐に帰"],
+    a:"わしが政府をやめて高知へ帰ったのは、自分の信じる道がとおらなんだからじゃ。じゃが、ただ引っこんだのではない。「ひとにぎりの役人だけで政治を決めるのはおかしい。民の声を政治にとどけねば」――そう考え、新しい戦いを始めたのよ。言葉と志(こころざし)による戦いをな。"
+  },
+
+  // ===== 自由民権運動 =====
+  {
+    keys:["立志社","りっししゃ","高知で","団体","土佐で結社"],
+    a:"高知へ帰ったわしは、1874年に「立志社(りっししゃ)」という団体をつくった。人々が政治を学び、自分の権利(けんり)について考えるための場じゃ。ここを足がかりに、自由民権の声は、土佐から日本じゅうへと広がっていったのよ。"
+  },
+  {
+    keys:["民撰議院","みんせんぎいん","建白書","けんぱくしょ","国会つくれ","議会を","意見書"],
+    a:"1874年、わしは仲間とともに「民撰議院設立建白書(みんせんぎいんせつりつけんぱくしょ)」を政府にさし出した。「国民のえらんだ人が集まって話しあう議会(国会)をつくるべきだ」という意見書じゃ。これが、日本の自由民権運動が始まる、たいへん大事な第一歩となったのよ。"
+  },
+  {
+    keys:["自由民権運動","じゆうみんけん","民権運動","みんけん","運動とは","どんな運動"],
+    a:"自由民権運動(じゆうみんけんうんどう)とは、「国民にも自由と権利(けんり)をあたえ、政治に参加させよ」ともとめた運動じゃ。一部の役人だけでなく、ふつうの人々の声で国を動かす――そのために国会をひらこうと、わしは日本じゅうをかけまわって訴(うった)えた。わしが、この運動の先頭に立ったのよ。"
+  },
+  {
+    keys:["自由とは","じゆうとは","自由って","自由の意味","自由を","なぜ自由"],
+    a:"「自由(じゆう)」とは、わがままにふるまうことではない。一人ひとりが人としてもつ大切な権利(けんり)を、たがいに尊重(そんちょう)しあうことよ。だれもが意見を言え、政治に参加できる――そういう世こそ、ほんとうの自由じゃ。わしは、その自由のために命をかけたのよ。"
+  },
+  {
+    keys:["なぜ国会","どうして国会","国会いる","議会いる","国会が必要","国会の意味"],
+    a:"なぜ国会(こっかい)が必要か。ひとにぎりの人だけで政治を決めれば、まちがいもおきるし、民の願いはとどかぬ。国じゅうから選ばれた人が集まり、みなで話しあって決める――それでこそ、よい政治ができるのじゃ。わしは「国会を創(つく)った男」とよばれておるぞ。"
+  },
+  {
+    keys:["言葉で戦","ことばで","演説","えんぜつ","西南戦争の教訓","武力やめ","言論"],
+    a:"親友の西郷隆盛が西南戦争(せいなんせんそう)でやぶれ命を落としたとき、わしは思い知った。「もう、力(武力)で世は変えられぬ。これからは言葉(言論)で戦うのだ」とな。それからわしは、刀(かたな)のかわりに演説(えんぜつ)を武器とし、日本じゅうに自由をうったえて回ったのよ。"
+  },
+  {
+    keys:["国会期成同盟","きせいどうめい","愛国社","あいこくしゃ","全国に広","運動広がり"],
+    a:"自由民権の声は、たちまち日本じゅうに広がった。各地の仲間が「愛国社(あいこくしゃ)」、そして「国会期成同盟(こっかいきせいどうめい)」をつくり、国会をひらけと政府にせまったのじゃ。土佐から始まった小さな声が、やがて国を動かす大きなうねりとなった。みなの力よ。"
+  },
+  {
+    keys:["国会開設の詔","みことのり","1881","明治14","国会ひらく約束","10年後"],
+    a:"わしらの運動がみのり、1881年(明治14年)、ついに政府は「10年後に国会をひらく」と約束した(国会開設の詔)。言葉と志でかちとった、大きな勝利じゃ。武力でなく、人々の声の力で政府を動かしたのよ。これぞ自由民権運動の、かがやかしい成果(せいか)であった。"
+  },
+
+  // ===== 自由党 =====
+  {
+    keys:["自由党","じゆうとう","政党","せいとう","党をつく","日本初の政党"],
+    a:"1881年、国会開設の約束がなされたのをうけ、わしは日本で初めての本格的な政党「自由党(じゆうとう)」をつくった。おなじ志(こころざし)の者が集まり、力をあわせて政治を動かす――それが政党じゃ。わしは、その自由党の党首(総理)となったのよ。"
+  },
+  {
+    keys:["党首","とうしゅ","総理","そうり","自由党のリーダー","自由党の党首"],
+    a:"わしは日本初の政党・自由党の党首(とうしゅ。総理ともいう)となった。全国をめぐって演説し、自由民権をうったえると、行く先々で人々が、まるで殿(との)さまをむかえるように、わしを熱くむかえてくれた。「自由の泰斗(たいと)」――自由の大家(たいか)とまでよばれたものよ。"
+  },
+  {
+    keys:["国会を創った男","国会をつくった男","国会を作った","つくった男"],
+    a:"わしは「国会を創(つく)った男」とよばれておる。民撰議院設立建白書(みんせんぎいんせつりつけんぱくしょ)をさし出し、自由民権運動の先頭に立ち、国会開設をかちとった――その働きゆえじゃ。東アジアで初めての議会を日本にきずく道をひらいたこと、これがわしの一番のほこりよ。"
+  },
+
+  // ===== 岐阜事件 =====
+  {
+    keys:["岐阜事件","ぎふじけん","岐阜で","おそわれ","襲われ","刺され","事件"],
+    a:"1882年(明治15年)4月6日、岐阜(ぎふ)で演説を終えたわしは、会場を出たところで、短刀(たんとう)をもった暴漢(ぼうかん)におそわれ、刺(さ)されてしまった。これが世にいう「岐阜事件(ぎふじけん)」じゃ。じゃが、わしは命をとりとめた。このとき発したとされる言葉が、のちのちまで語りつがれることになるのよ。"
+  },
+  {
+    keys:["板垣死すとも","死すとも自由","名言","めいげん","自由は死せず","有名な言葉","死すとも"],
+    a:"岐阜で刺(さ)されたとき、わしはこう叫(さけ)んだと伝わる――「板垣死すとも自由は死せず」。たとえこの板垣退助が死んでも、自由をもとめる心は、けっして死なぬ、という意味じゃ。じっさいは少しちがう言い方だったともいうが、この言葉は自由民権運動の象徴(しょうちょう)として、今も語りつがれておる。"
+  },
+  {
+    keys:["相原","あいはら","犯人","はんにん","おそった人","刺した人","誰がおそ"],
+    a:"わしをおそった犯人は、相原尚褧(あいはらなおぶみ)という、当時27さいの小学校の先生じゃった。自由党をきらい、わしを「将来の賊(ぞく)」と思いこんでのことよ。考えのちがう相手を刃物(はもの)であやめようとする――それこそ、自由を否定する行いじゃ。じゃがわしは生きのびた。自由もまた、死ななんだのよ。"
+  },
+  {
+    keys:["後藤新平","ごとうしんぺい","治療","ちりょう","医者","いしゃ","手当て"],
+    a:"岐阜で刺されたわしを手当てしたのは、後藤新平(ごとうしんぺい)という、当時まだ医者であった若者じゃ。「閣下(かっか)、御本懐(ごほんかい)でございましょう」と、武人らしいわしの覚悟をたたえてくれた。わしはその才を見ぬき「彼を政治家にできぬのが残念だ」と語った。後藤はのちに、ほんとうに大政治家となったのよ。"
+  },
+  {
+    keys:["何度も狙われ","暗殺未遂","あんさつ","命をねらわ","6回","狙われた"],
+    a:"わしは生涯(しょうがい)に、なんと6回も命をねらわれた。岐阜事件は、そのうち最も有名なものよ。それだけ、わしの説く自由が世の中をゆるがし、おそれる者も多かったということじゃ。じゃが、おどしや刃物では、わしの信念(しんねん)はくじけぬ。自由をもとめる心は、何ものにも負けぬのよ。"
+  },
+
+  // ===== 政党内閣 =====
+  {
+    keys:["隈板内閣","わいはん","大隈と","政党内閣","せいとうないかく","初の内閣"],
+    a:"1898年(明治31年)、わしは大隈重信(おおくましげのぶ)とともに、日本で初めての「政党内閣(せいとうないかく)」をつくった。二人の名をとって「隈板内閣(わいはんないかく)」とよばれる。政党が中心となって国の政治をうごかす――これは、日本の政治の歴史に新しいページをひらいた、大きなできごとであった。"
+  },
+  {
+    keys:["大隈","おおくま","重信","しげのぶ","大隈重信","早稲田"],
+    a:"大隈重信(おおくましげのぶ)は、わしとならぶ明治の大政治家じゃ。のちに早稲田大学(わせだだいがく)をつくった人物としても知られておる。考えのちがうところもあったが、日本初の政党内閣をつくるときには、たがいに手をむすんだ。よきライバルであり、よき盟友(めいゆう)であったのよ。"
+  },
+  {
+    keys:["政党内閣とは","せいとうないかくとは","初めての内閣","日本初の内閣"],
+    a:"政党内閣(せいとうないかく)とは、選挙でえらばれた政党が中心になってつくる内閣(ないかく)のことじゃ。それまで政治は、ひとにぎりの人たちで動かされておった。じゃが民のえらんだ政党が政治の中心にすわる――わしと大隈がつくった隈板内閣は、その第一歩となったのよ。"
+  },
+
+  // ===== 晩年・社会事業 =====
+  {
+    keys:["政界引退","引退","いんたい","政治をやめ","退いた","身を引"],
+    a:"1900年(明治33年)、わしは政治の世界から身を引いた。じゃが、それで終わりではない。残りの人生は、めぐまれぬ人々を助ける社会事業(しゃかいじぎょう)にささげたのよ。一生をかけて民(たみ)のために働く――それが、わしの生き方であった。"
+  },
+  {
+    keys:["爵位","しゃくい","伯爵","はくしゃく","返上","へんじょう","位を返","子孫に残さ"],
+    a:"わしは手柄により「伯爵(はくしゃく)」という高い身分をさずかった。じゃが、その位(くらい)を子孫(しそん)に残すことを、わしはことわった。「身分でなく、その人の力で世に立つべし」――それが、わしのつらぬいた信念じゃ。みずから説いた平等(びょうどう)の道を、わしは身をもって示したのよ。"
+  },
+  {
+    keys:["清貧","せいひん","貧しい暮ら","お金","財産","ぜいたくしな","質素な暮ら"],
+    a:"わしは、生涯にわたって清貧(せいひん)――まずしくとも、心は清らかに生きた。倒幕や自由民権のために、私財(しざい)をどんどんなげうったからのう。お金もうけより、世のため人のため。古い武士の心ばえを、わしは最後まで失わなかったのよ。"
+  },
+  {
+    keys:["帝国公道会","こうどうかい","差別","さべつ","部落","ぶらく","差別をなく","平等の運動"],
+    a:"わしは晩年、「帝国公道会(ていこくこうどうかい)」という会をつくった。理由なく差別(さべつ)されてきた人々を解放し、みなが平等にくらせる世をつくるためじゃ。日本で初めての、こうした全国組織よ。子どものころから身分でなく人の中身を見てきたわしの、最後の大仕事の一つであった。"
+  },
+  {
+    keys:["台湾","たいわん","同化会","台湾同化会","台湾の人"],
+    a:"わしは晩年、はるばる台湾(たいわん)へもわたり、「台湾同化会(たいわんどうかかい)」をつくった。台湾の人々の地位(ちい)を高め、ともに手をたずさえようとしたのじゃ。生まれや出身でなく、おなじ人として向きあう――わしの考えは、海をこえても変わらなかったのよ。"
+  },
+  {
+    keys:["社会事業","しゃかいじぎょう","傷痍軍人","しょういぐんじん","助けた","福祉","ふくし","弱い人を"],
+    a:"政治をはなれたあとのわしは、戦いで傷ついた兵士(傷痍軍人)を助けたり、めぐまれぬ人々の暮らしをよくする仕事に力をつくした。耳をわずらった少年時代の経験から、不自由をかかえる人の気持ちが、わしにはよう分かったのじゃ。最後まで、弱き者の味方であろうとしたのよ。"
+  },
+  {
+    keys:["按摩","あんま","目の不自由","視覚障害","マッサージ","盲人"],
+    a:"わしは、目の不自由な人が按摩(あんま。マッサージ)の仕事で身を立てられるよう力ぞえした。自分が少年のころ耳をわずらった経験から、体に不自由をもつ人の苦労が、よう分かったからじゃ。だれもが自分の力で生きていける――そんな世を、わしはのぞんだのよ。"
+  },
+
+  // ===== 人となり・趣味 =====
+  {
+    keys:["競馬","けいば","馬","うま","馬を育","奨励","レース"],
+    a:"わしは競馬(けいば)をすすめた。なに、ばくち好きだったわけではないぞ。よい馬を育てることが、国を守る軍馬(ぐんば)の役に立つと考えたからじゃ。遊びのように見えることの中にも、国のためになる種がある――そう見ぬくのも、政治家のつとめよ。"
+  },
+  {
+    keys:["ルイヴィトン","るいゔぃとん","かばん","トランク","ヨーロッパで買","ブランド"],
+    a:"わしが議会のしくみを学びにヨーロッパへわたったとき、パリでトランク(旅行かばん)を一つ買い求めた。それが、日本に現存する最も古いルイ・ヴィトンの品だといわれておる。意外であろう? 自由民権の志士(しし)も、よい道具は大切にしたのじゃ。"
+  },
+  {
+    keys:["ヨーロッパ","欧州","おうしゅう","外国","がいこく","視察","しさつ","海外","西洋に"],
+    a:"わしは、よりよい議会(国会)をつくるため、はるばるヨーロッパへわたり、進んだ国々の政治のしくみを学んだ。外の世界を自分の目で見て学ぶ――これも、新しい日本をつくるために欠かせぬことよ。世界を知ってこそ、よい国づくりができるのじゃ。"
+  },
+  {
+    keys:["武士道","ぶしどう","著作","ちょさく","本を書","考え方","思想","しそう"],
+    a:"わしは晩年、『武士道論(ぶしどうろん)』や『日本は侵略国にあらず』など、いくつもの本を書きのこした。わしの説く自由は、外国のまねごとではない。日本の武士道(ぶしどう)の精神(せいしん)に根ざした、日本ならではの自由なのじゃ。そこがわしのこだわりであったのよ。"
+  },
+  {
+    keys:["尊皇","そんのう","天皇","てんのう","天皇をうやま","尊王","勤皇"],
+    a:"わしは生涯、天皇(てんのう)を心からうやまう「尊皇(そんのう)」の人であった。「自由」を説くことと、天皇をうやまうことは、わしの中ではすこしも矛盾(むじゅん)せぬ。君(きみ)と民(たみ)が心をひとつにしてこそ、よい国ができる――そう信じておったのよ。"
+  },
+  {
+    keys:["性格","せいかく","どんな人","人がら","ひとがら","まっすぐ","正義感"],
+    a:"わしか? 清廉潔白(せいれんけっぱく)で、まがったことが大きらい。正しいと思うたことは、相手が大人であろうと身分が上であろうと、ずけずけと言う。そのため、よく罰(ばつ)もうけたが、こりずに言いつづけた。まっすぐすぎるのが、わしという男じゃ。はっはっは。"
+  },
+
+  // ===== 評価・後世 =====
+  {
+    keys:["お札","おさつ","紙幣","しへい","肖像","しょうぞう","100円","50銭","お金になった"],
+    a:"わしの顔は、かつてのお金(紙幣)にえがかれておった。100円札や50銭(せん)札の肖像(しょうぞう)じゃ。お札の裏には、わしが生涯をかけてつくった国会議事堂(こっかいぎじどう)がえがかれた。「国会を創った男」にふさわしい図がらであろう。国民にながく愛された、なによりのあかしよ。"
+  },
+  {
+    keys:["土佐三伯","とささんぱく","三伯","後藤と佐々木","三人の伯爵"],
+    a:"明治維新で手柄を立てた土佐出身の伯爵(はくしゃく)のうち、わし(板垣退助)、後藤象二郎(ごとうしょうじろう)、佐々木高行(ささきたかゆき)の三人は、まとめて「土佐三伯(とささんぱく)」とよばれた。土佐から、これだけの人物が出たのよ。ふるさとのほまれじゃ。"
+  },
+  {
+    keys:["座右の銘","ざゆうのめい","信条","しんじょう","大事にした言葉","モットー"],
+    a:"わしの座右の銘(ざゆうのめい)は「死生(しせい)もまた大なり」――生きることも死ぬことも、ともに重く大切なものだ、という意味じゃ。命を軽んじず、されど、自由や正義のためなら命をかける。この覚悟(かくご)が、岐阜で刺されたときの「自由は死せず」の言葉となってあらわれたのよ。"
+  },
+  {
+    keys:["何歳","なんさい","いくつ","死んだ","亡くな","享年","きょうねん","いつ死","最期","さいご","死没"],
+    a:"わしが世を去ったのは1919年(大正8年)7月16日、満82さい(数えで83さい)であった。岐阜で刺されても生きのび、その後も国のために働きぬいた長い一生よ。最後まで、自由と民(たみ)を思いつづけた生涯であった。思いのこすことは、もはや何もない。"
+  },
+  {
+    keys:["墓","はか","お墓","おはか","どこに眠","眠ってる","墓所"],
+    a:"わしの墓は、東京の品川(しながわ)にある。じゃが、わしのほんとうの墓は、墓石(ぼせき)の中ではない。今この国で、人々が自由に意見を言い、選挙で政治に参加できる――その一つひとつの中に、わしは生きておるのじゃ。自由のあるところ、どこにでもわしはおるのよ。"
+  },
+
+  // ===== その他・補足 =====
+  {
+    keys:["どんな時代","じだい","幕末","ばくまつ","明治","めいじ","いつの人","時代背景"],
+    a:"わしが生きたのは、江戸の世が終わり、明治という新しい世が始まる、まさに時代の大きな変わり目じゃ。ちょんまげに刀の世から、洋服に汽車の世へ。古いものがくずれ、新しいものが生まれる――そんな激動(げきどう)の時代を、わしは駆けぬけたのよ。およそ150年ほど前のことじゃな。"
+  },
+  {
+    keys:["明治維新","めいじいしん","維新","いしん","新しい世","世の中が変わ"],
+    a:"明治維新(めいじいしん)とは、古い江戸幕府がたおれ、天皇を中心とした新しい政府ができた、日本の大変革(だいへんかく)じゃ。わしも戊辰戦争で戦い、この維新をなしとげた一人(元勲)よ。じゃがわしは、武士だけの維新で満足せなんだ。「民(たみ)のための維新」を、さらに先へと進めようとしたのじゃ。"
+  },
+  {
+    keys:["新聞","しんぶん","演説会","えんぜつかい","どう広め","運動の広がり方","民権の広がり"],
+    a:"自由民権の考えは、演説会(えんぜつかい)や新聞(しんぶん)をつうじて、日本じゅうに広まった。各地で人々が集まり、自由について熱く語りあったのじゃ。言葉の力で人の心を動かし、世の中を変えていく――刀ではなく、これこそが新しい時代の戦い方であったのよ。"
+  },
+  {
+    keys:["五箇条","ごかじょう","御誓文","ごせいもん","公論","会議"],
+    a:"わしは、明治のはじめに天皇が示された「五箇条の御誓文(ごかじょうのごせいもん)」をことのほか大切にした。その第一条には「広く会議をおこし、何ごとも公(おおやけ)の議論で決めよ」とある。これこそ国会の精神(せいしん)じゃ。わしの自由民権運動は、この御誓文を土台にしておったのよ。"
+  },
+  {
+    keys:["国民皆兵","こくみんかいへい","みんなで国を守","兵隊","へいたい","徴兵"],
+    a:"わしは、身分にかかわらず国民みなで国を守る「国民皆兵(こくみんかいへい)」の考えをかかげた。武士だけが戦う世から、みなが国を守る世へ。権利(けんり)をもとめるなら、国を守る務(つと)めもみなで分けあう――そういう筋(すじ)の通った考えであったのよ。"
+  },
+  {
+    keys:["なぜ人気","どうして人気","愛された","人気者","支持","したわれた","庶民派"],
+    a:"わしがなぜ人々に愛されたか。それはな、伯爵(はくしゃく)という身分になっても、子どものころ遊んだ仲間と分けへだてなく付きあい、いつも弱き者の味方であったからじゃ。えらぶらず、まっすぐで、清貧(せいひん)をつらぬく――そんな「庶民派(しょみんは)」のわしを、国民は心からしたってくれたのよ。"
+  },
+  {
+    keys:["見た目","みため","顔","かお","ひげ","写真","風貌","どんな姿","外見"],
+    a:"わしは、りっぱなひげをたくわえた風貌(ふうぼう)でな。お札の肖像(しょうぞう)を見れば分かるとおりよ。古い武士の品格(ひんかく)をたもちつつ、明治の世にあわせて洋服も身につけた。中身は土佐の自由人、見た目は明治の紳士(しんし)――そんなところであったかのう。"
+  },
+  {
+    keys:["山内容堂","ようどう","殿様","とのさま","主君","しゅくん","藩主","容堂"],
+    a:"わしが仕えた土佐藩の殿(との)さまは、山内容堂(やまうちようどう)という。なかなかのうつわの人物で、わしの正直で物おじせぬ気性(きしょう)を、よく見ぬいてくださった。よき主君(しゅくん)にめぐまれたことも、わしが世に出る一つの縁(えん)であったのよ。"
+  },
+  {
+    keys:["吉田東洋","よしだとうよう","東洋","誘いを断","塾に行かな"],
+    a:"若いころ、土佐の重臣・吉田東洋(よしだとうよう)から「わしの塾(じゅく)で学ばぬか」とさそわれたが、わしはこれをことわった。後藤象二郎や岩崎弥太郎(いわさきやたろう)は通うたがな。わしは、人の敷(し)いた道よりも、自分でえらんだ道を行く性分(しょうぶん)であったのよ。"
+  },
+  {
+    keys:["役目","やくめ","税務官","ぜいむかん","町奉行","まちぶぎょう","藩での仕事","役人時代"],
+    a:"わしは土佐藩で、税(ぜい)をあつかう役人や、町奉行(まちぶぎょう)などをつとめた。税の役についたときには、おそるおそる文句を言う農民たちに「身分のへだてなく、遠慮(えんりょ)なく意見を言うがよい」と語ったものよ。役人のころから、わしは民の声に耳をかたむけておったのじゃ。"
+  },
+  {
+    keys:["信賞必罰","しんしょうひつばつ","公平","こうへい","えこひいきしな","平等にあつか"],
+    a:"わしは、身分の上下に関係なく、よく働いた者にはほうびを、悪いことをした者には罰(ばつ)を――と、つねに公平(こうへい)であろうとした。だれであろうと、その人の行いで正しく評価する。この姿勢は、まるで織田信長(おだのぶなが)のようだとも言われたものよ。"
+  },
+  {
+    keys:["教訓","きょうくん","学ぶ","まなぶ","退助から","どう生きる","大切なこと"],
+    a:"わしから何を学ぶか、か。一つ、身分や出身でなく、その人の中身で人を見ること。一つ、弱き者の味方であること。一つ、正しいと思うたことは、力でなく言葉でうったえつづけること。そして、自由は、だれかがあたえてくれるものではない。自分たちで、もとめ、守るものなのじゃ。"
+  },
+  {
+    keys:["自由党その後","解散","かいさん","再結党","自由党は","党のその後"],
+    a:"わしのつくった自由党は、運動がはげしくなるなかで、一度は解散(かいさん)もした。じゃが、自由をもとめる火は消えなんだ。やがて国会がひらかれると、自由党はふたたび立ち上がった。形は変われど、自由をもとめる志(こころざし)は、ずっと受けつがれていったのよ。"
+  },
+  {
+    keys:["自由民主党","じみんとう","今の党","現在の政党","ルーツ","源流","つながり"],
+    a:"わしのつくった自由党(じゆうとう)の流れは、じつは今の日本の政党にもつながっておるといわれる。100年以上の時をこえて、わしのまいた「自由」の種は、今もこの国に生きておるのじゃ。一人ひとりが政治に参加できる――そんな世を見ることができて、わしはまんぞくよ。"
+  },
+  {
+    keys:["銅像","どうぞう","記念","きねん","像","高知の","残ってる"],
+    a:"わしの銅像(どうぞう)は、ふるさと高知の高知公園(高知城のそば)をはじめ、各地に建てられておる。国会議事堂(こっかいぎじどう)の中にも、わしの像があるぞ。「国会を創った男」として、今もこうして人々に思い出してもらえる――これにまさるよろこびはないのう。"
+  },
+  {
+    keys:["妻","つま","結婚","けっこん","奥さん","家族","かぞく","子ども","子孫","しそん"],
+    a:"わしには妻も子もおった。何度かの結婚もした。家族には、いろいろと苦労もかけたのう。なにせ、私財をなげうって国のために走りまわる夫(おっと)じゃからな。じゃが、家族あってこそのわしの働き。かげで支えてくれた者たちには、心から感謝(かんしゃ)しておるのじゃ。"
+  },
+  {
+    keys:["失敗","しっぱい","うまくいかな","内閣がたお","つらかった","苦労","くろう"],
+    a:"わしの一生とて、うまくいくことばかりではなかった。せっかくつくった政党内閣も、仲間うちの意見の対立で、わずか数か月でたおれてしまった。何度も命をねらわれもした。じゃが、たおれてもまた立ち上がる。あきらめぬことこそ、自由をかちとる力なのじゃ。"
+  },
+  {
+    keys:["岩崎弥太郎","やたろう","三菱","みつびし","岩崎"],
+    a:"岩崎弥太郎(いわさきやたろう)――のちに三菱(みつびし)をおこした、あの大実業家じゃな。じつは若いころ、わしと同じ土佐で、ともに罰をうけ謫居(たっきょ)の身であったこともある。土佐という土地は、政治家も、実業家も、まことに多くの傑物(けつぶつ)を生んだものよのう。"
+  },
+  {
+    keys:["なぜ有名","どうして有名","すごい","えらい","功績","こうせき","何をした人"],
+    a:"わしがなぜ歴史に名を残したか。それは、日本に初めて「国会」と「自由」をもたらす道をひらいたからじゃ。武士だけの世から、国民みなが政治に参加できる世へ。「板垣死すとも自由は死せず」――この言葉とともに、わしは日本の民主主義(みんしゅしゅぎ)の父の一人として語りつがれておるのよ。"
+  },
+  {
+    keys:["権利","けんり","人権","じんけん","天賦人権","生まれながら"],
+    a:"わしは「人は生まれながらにして、自由と権利(けんり)をもっている」と説いた。これを天賦人権(てんぷじんけん)という。身分の高い低いに関わらず、だれもが大切にされるべき権利をもっておるのじゃ。その権利を守り、政治にいかすために、わしは国会の開設をもとめたのよ。"
+  },
+  {
+    keys:["板垣退助ってだれ","たいすけって","あなたは誰","きみは誰","自己紹介","じこしょうかい","何者"],
+    a:"わしは板垣退助(いたがきたいすけ)。土佐に生まれ、戊辰戦争で戦い、明治の世では自由民権運動の先頭に立った男よ。「国会を創った男」「板垣死すとも自由は死せず」――そう聞けば、思いあたるであろう。今のこの国の自由のもとをきずいた者、それがわしじゃ。なんでも聞いてくれ。"
+  },
+  {
+    keys:["どんな人が参加","運動に参加","農民","のうみん","若者","わかもの","民権家","参加した人","だれが運動"],
+    a:"自由民権運動には、武士だけでなく、農民(のうみん)も、町の商人も、血気さかんな若者も、じつにさまざまな人が参加した。みな「自分たちの手で、よりよい世をつくりたい」と願ったのじゃ。一人の力は小さくとも、おおぜいが心をあわせれば、政府さえ動かせる。それを示したのが、この運動なのよ。"
+  }
+];
+
+// 入力にいちばん合う答えをさがす
+function findAnswer(text){
+  const t = (text||"").replace(/\s/g,"");
+  if(!t) return null;
+  let best=null, bestScore=0;
+  for(const item of KB){
+    let score=0;
+    for(const k of item.keys){ if(t.includes(k)) score += k.length; }
+    if(score>bestScore){bestScore=score; best=item;}
+  }
+  return bestScore>0 ? best.a : null;
+}
+
+const NOT_FOUND = [
+  "ふむ、それはわしにもよう分からぬ問いじゃ。言葉を変えて、もう一度きいてみよ。たとえば『自由民権運動』『岐阜事件』『国会』『戊辰戦争』などはどうじゃ?",
+  "むむ、それについては答えを持ちあわせておらぬ。べつの言い方で、もう一度たずねてみよ。",
+  "はて、聞きおぼえのない問いじゃのう。『自由党』や『板垣死すとも自由は死せず』のことなら、いくらでも語ってやれるぞ。"
+];
+
+const GREET = "やあ、わしが板垣退助(いたがきたいすけ)じゃ! 「国会を創った男」とよばれ、自由民権運動の先頭に立った男よ。聞きたいことを下のますに入力して、リターンを押すか「きく」ボタンを押すがよい。なんでも答えてやろうぞ!";
+
+// ===== タイプライター表示 =====
+const answerEl = document.getElementById('answer');
+const faceEl = document.getElementById('face');
+let typing=null;
+let mouthTimer=null;
+function startMouth(){
+  stopMouth();
+  // 口を開いた絵と閉じた絵をすばやく切り替えて「ぱくぱく」させる
+  mouthTimer=setInterval(()=>{ faceEl.classList.toggle('talking-open'); },130);
+}
+function stopMouth(){
+  if(mouthTimer){ clearInterval(mouthTimer); mouthTimer=null; }
+  faceEl.classList.remove('talking-open'); // 話し終わりは口を閉じた絵にもどす
+}
+function speak(text, mood){
+  faceEl.classList.remove('talk','seikai','zannen'); void faceEl.offsetWidth;
+  faceEl.classList.add(mood || 'talk');
+  startMouth();
+  if(typing) clearInterval(typing);
+  answerEl.innerHTML="";
+  let i=0;
+  typing=setInterval(()=>{
+    if(i>=text.length){clearInterval(typing); stopMouth(); return;}
+    answerEl.appendChild(document.createTextNode(text[i]));
+    i++;
+  },32);
+}
+
+function handleAsk(text){
+  const a = findAnswer(text);
+  if(a){ speak(a); }
+  else{ speak(NOT_FOUND[Math.floor(Math.random()*NOT_FOUND.length)]); }
+}
+
+// ===== 入力イベント（問答） =====
+const qEl=document.getElementById('q');
+
+// IME（日本語入力）の変換確定中かどうかを記録する
+let composing=false;
+qEl.addEventListener('compositionstart',()=>{ composing=true; });
+qEl.addEventListener('compositionend',()=>{ composing=false; });
+
+document.getElementById('askBtn').onclick=()=>handleAsk(qEl.value);
+qEl.addEventListener('keydown',e=>{
+  // 漢字変換などの確定リターンでは送信しない。
+  // 変換が確定し、ふつうにリターンを押したときだけ質問を送る。
+  if(e.key==='Enter' && !composing && !e.isComposing){
+    handleAsk(qEl.value);
+  }
+});
+
+// ===== タブ切りかえ =====
+const TAB_GREET = {
+  qa:"なんでも聞いてくれ。下のますに質問を入れて「きく」を押すのじゃ。",
+  quiz:"さあ、クイズの始まりじゃ! わしについて、どれだけ知っておるかな。三つの中から、正しいと思うものを一つえらぶがよい。",
+  nenpyo:"これがわしの一生をまとめた年表じゃ。年（行）を押せば、そのできごとを語ってやろう。",
+  soukan:"わしをめぐる人びとの相関図(そうかんず)じゃ。人物の丸を押せば、その者との縁(えん)を語ってやるぞ。",
+  kokkai:"クラス国会のはじまりじゃ! 議題(ぎだい)を決めて、賛成・反対を数えてみよ。みなで話しあって決める――これぞ、わしが一生をかけてつくろうとした「国会」よ。議長は、このわしがつとめよう!"
+};
+const tabs=document.querySelectorAll('.tab');
+const panels={
+  qa:document.getElementById('panel-qa'),
+  quiz:document.getElementById('panel-quiz'),
+  nenpyo:document.getElementById('panel-nenpyo'),
+  soukan:document.getElementById('panel-soukan'),
+  kokkai:document.getElementById('panel-kokkai')
+};
+tabs.forEach(t=>{
+  t.onclick=()=>{
+    tabs.forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const name=t.dataset.tab;
+    Object.keys(panels).forEach(k=>panels[k].classList.toggle('show',k===name));
+    speak(TAB_GREET[name]);
+    if(name==='quiz') startQuiz();
+  };
+});
+
+// ===== クイズ =====
+const QUIZ = [
+  { q:"板垣退助が生まれたのは、いまの何県?", o:["高知県","東京都","鹿児島県"], c:0,
+    e:"せいかい! わしは土佐藩――いまの高知県の生まれじゃ。坂本龍馬とおなじ土地よ。" },
+  { q:"岐阜でおそわれたとき、板垣が言ったとされる有名な言葉は?", o:["板垣死すとも自由は死せず","是非に及ばず","ホトトギス"], c:0,
+    e:"そのとおり!「板垣死すとも自由は死せず」――自由をもとめる心は死なぬ、という意味じゃ。" },
+  { q:"板垣退助は何をつくる運動の先頭に立った?", o:["国会(議会)","お城","鉄道"], c:0,
+    e:"よし!「国会を創った男」とよばれるとおり、国会をひらく運動をひっぱったのじゃ。" },
+  { q:"板垣がつくった、日本で初めての本格的な政党は?", o:["自由党","新選組","薩摩藩"], c:0,
+    e:"せいかい! 1881年につくった「自由党」じゃ。おなじ志の者が集まる政党よ。" },
+  { q:"子どものころからの板垣の親友はだれ?", o:["後藤象二郎","織田信長","徳川家康"], c:0,
+    e:"その通り! 竹馬の友・後藤象二郎じゃ。「いのす」「やす」と呼びあう仲であった。" },
+  { q:"板垣が薩摩の西郷隆盛と結んだやくそくは?", o:["薩土密約","関ヶ原の戦い","参勤交代"], c:0,
+    e:"よくできた! 古い幕府をたおすための「薩土密約」じゃ。" },
+  { q:"国民にも自由と権利をあたえよ、ともとめた運動の名は?", o:["自由民権運動","参勤交代","廃藩置県"], c:0,
+    e:"せいかい! ふつうの人々の声で国を動かそうとした「自由民権運動」じゃ。" },
+  { q:"板垣が少年のころ、わるくしてしまった体の部分は?", o:["耳(聞こえ)","足","目"], c:0,
+    e:"そのとおり。川で泳いで耳に水が入り、しばらく聞こえにくくなったのじゃ。" },
+  { q:"板垣の好物だった食べ物は?", o:["鮎の塩焼きと半熟卵","ラーメン","カレー"], c:0,
+    e:"よし! ふるさとの川でとれた鮎の塩焼きと、半熟卵が大好物であった。" },
+  { q:"板垣が大隈重信とつくった、日本初のものは?", o:["政党内閣","新幹線","郵便局"], c:0,
+    e:"せいかい! 政党が中心となる「政党内閣(隈板内閣)」じゃ。" },
+  { q:"板垣のご先祖で、武田信玄につかえた武将はだれ?", o:["板垣信方","明智光秀","石田三成"], c:0,
+    e:"よく知っておった! ご先祖は武田信玄の重臣・板垣信方じゃ。" },
+  { q:"岐阜でけがをした板垣を手当てした、のちの大政治家は?", o:["後藤新平","伊藤博文","勝海舟"], c:0,
+    e:"その通り。当時まだ医者だった後藤新平が手当てしてくれたのじゃ。" }
+];
+
+let quizOrder=[], quizIdx=0, quizScore=0;
+const quizBox=document.getElementById('quizBox');
+
+function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+function startQuiz(){
+  quizOrder=shuffle(QUIZ.map((_,i)=>i)).slice(0,10); // 毎回10問ランダム
+  quizIdx=0; quizScore=0;
+  renderQuiz();
+}
+
+function renderQuiz(){
+  const q=QUIZ[quizOrder[quizIdx]];
+  // 選択肢の順番をまぜる（正解がいつも先頭にならないように）
+  const order=shuffle(q.o.map((_,i)=>i));
+  const correctPos=order.indexOf(q.c);
+  quizBox.innerHTML="";
+  const head=document.createElement('div'); head.className='quiz-head';
+  head.innerHTML=`<span class="quiz-count">第${quizIdx+1}問 / ${quizOrder.length}問</span><span class="quiz-score">せいかい数：${quizScore}</span>`;
+  const qd=document.createElement('div'); qd.className='quiz-q'; qd.textContent=q.q;
+  const opts=document.createElement('div'); opts.className='quiz-opts';
+  order.forEach((origIdx,pos)=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=q.o[origIdx];
+    b.onclick=()=>chooseOpt(pos,correctPos,b,opts,q);
+    opts.appendChild(b);
+  });
+  const fb=document.createElement('div'); fb.className='quiz-feedback'; fb.id='quizFb';
+  quizBox.append(head,qd,opts,fb);
+}
+
+function chooseOpt(pos,correctPos,btn,opts,q){
+  const buttons=[...opts.querySelectorAll('.opt')];
+  buttons.forEach((b,idx)=>{
+    b.disabled=true;
+    if(idx===correctPos) b.classList.add('correct');
+    else if(idx===pos) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  const fb=document.getElementById('quizFb');
+  if(pos===correctPos){ quizScore++; faceEl.classList.remove('zannen'); faceEl.classList.add('seikai'); fb.textContent="○ "+q.e; }
+  else{ faceEl.classList.remove('seikai'); faceEl.classList.add('zannen'); fb.textContent="× おしい! 正しい答えは「"+q.o[q.c]+"」じゃ。 "+q.e; }
+  document.querySelector('.quiz-score').textContent="せいかい数："+quizScore;
+
+  const foot=document.createElement('div'); foot.className='quiz-foot';
+  const next=document.createElement('button'); next.className='quiz-next';
+  next.textContent = (quizIdx<quizOrder.length-1) ? "つぎの問題 →" : "けっか を みる";
+  next.onclick=()=>{
+    faceEl.classList.remove('seikai','zannen');
+    if(quizIdx<quizOrder.length-1){ quizIdx++; renderQuiz(); }
+    else showQuizResult();
+  };
+  foot.appendChild(next); quizBox.appendChild(foot);
+}
+
+function showQuizResult(){
+  const n=quizOrder.length, s=quizScore;
+  let msg;
+  if(s===n) msg="お見事! 全問せいかいじゃ。そなたは立派な自由民権の同志(どうし)よ!";
+  else if(s>=n*0.7) msg="あっぱれ! ようわしのことを知っておる。この調子じゃ。";
+  else if(s>=n*0.4) msg="なかなかよいぞ。もう一度ちょうせんして、わしのことをもっと知ってくれ。";
+  else msg="まだまだこれからじゃ。問答や年表も見て、また挑戦するがよい!";
+  quizBox.innerHTML=`<div class="quiz-result">
+      <div class="quiz-count">けっか</div>
+      <div class="big">${n}問中 ${s}問せいかい!</div>
+      <div class="msg">${msg}</div>
+    </div>`;
+  const foot=document.createElement('div'); foot.style.textAlign="center";
+  const again=document.createElement('button'); again.className='quiz-next'; again.textContent="もう一度 ちょうせん";
+  again.onclick=()=>{ startQuiz(); };
+  foot.appendChild(again); quizBox.appendChild(foot);
+  speak(`クイズ、ようがんばった! ${n}問中${s}問せいかいじゃ。${msg}`);
+}
+
+// ===== 年表 =====
+const NENPYO = [
+  { y:"1837年", age:"0歳", t:"土佐藩（高知県）に生まれる。幼名は猪之助（いのすけ）。",
+    c:"わしが生まれたのは土佐の高知じゃ。幼名は猪之助。なかなかのやんちゃ坊主であったよ。" },
+  { y:"1860年ごろ", age:"20代", t:"江戸へ出て学問をおさめ、武術もみがく。土佐勤王党に名をつらねる。",
+    c:"若いころ、江戸へ出て学問と武術をみがいた。広い世界を知り、わしの目は日本全体へと開かれていったのじゃ。" },
+  { y:"1867年", age:"30歳", t:"西郷隆盛と「薩土密約」を結び、幕府をたおす決意をかためる。",
+    c:"京都で西郷どんと固く手をむすんだ。これが薩土密約じゃ。いよいよ古い世を変えるときが来たのよ。" },
+  { y:"1868年", age:"31歳", t:"戊辰戦争。迅衝隊をひきいて活躍。会津をせめ、日光東照宮を守る。",
+    c:"迅衝隊をひきいて東へ進軍した。じゃが、戦から逃げまどう民の姿に、わしは深く心を痛めたのじゃ。" },
+  { y:"1869年", age:"32歳", t:"明治新政府の参与となり、要職を歴任する。",
+    c:"戊辰戦争の手柄をみとめられ、新政府の参与となった。維新の元勲のひとりとしてな。" },
+  { y:"1873年", age:"36歳", t:"征韓論の対立で政府をはなれ（下野）、ふるさと高知へ帰る。",
+    c:"自分の信じる道がとおらず、政府の役をすてて高知へ帰った。じゃがこれが、自由民権という新しい戦いの始まりよ。" },
+  { y:"1874年", age:"37歳", t:"民撰議院設立建白書を提出。立志社をつくり、自由民権運動を始める。",
+    c:"「国会をつくれ」と政府に建白書をさし出した。これが自由民権運動の、かがやかしい第一歩じゃ。" },
+  { y:"1881年", age:"44歳", t:"国会開設の詔が出る。日本初の政党「自由党」をつくり、党首となる。",
+    c:"ついに国会をひらく約束をかちとり、日本初の政党・自由党をつくった。あのときのうれしさは、わすれられぬ。" },
+  { y:"1882年", age:"45歳", t:"岐阜事件。おそわれて負傷し「板垣死すとも自由は死せず」の言葉が伝わる。",
+    c:"岐阜で刺されてもなお「板垣死すとも自由は死せず」と叫んだ。わしは死んでも、自由をもとめる心は死なぬのじゃ!" },
+  { y:"1898年", age:"61歳", t:"大隈重信と日本初の政党内閣（隈板内閣）をつくり、内務大臣となる。",
+    c:"大隈どんと、日本で初めての政党内閣をつくった。民の声が政治の中心にすわる、大きな一歩であったよ。" },
+  { y:"1900年", age:"63歳", t:"政界を引退。以後、差別をなくす運動など社会事業にうちこむ。",
+    c:"政治をはなれてからも、差別をなくす運動や、めぐまれぬ人を助ける仕事に力をつくした。最後まで民の味方じゃ。" },
+  { y:"1919年", age:"82歳", t:"この世を去る。爵位（伯爵）は子孫に残さず返した。",
+    c:"82年の生涯であった。伯爵の位は子孫に残さなんだ。身分でなく力で生きよ――そう示して、わしは旅立ったのよ。" }
+];
+const tlEl=document.getElementById('timeline');
+NENPYO.forEach(n=>{
+  const d=document.createElement('div'); d.className='tl-item';
+  d.innerHTML=`<div><span class="tl-year">${n.y}</span><span class="tl-age">（${n.age}）</span></div><div class="tl-body">${n.t}</div>`;
+  d.onclick=()=>speak(n.c);
+  tlEl.appendChild(d);
+});
+
+// ===== 人物相関図 =====
+const CX=380, CY=280; // 中心（板垣退助）
+const SK_NODES = [
+  { name:"後藤象二郎", sub:"竹馬の友", rel:"親友",       x:380, y:70,
+    c:"後藤象二郎は、わしの竹馬の友よ。小さいころ、わしが蛇でおどかしたら、犬の糞を投げ返してきおった。きれい好きのわしは、たちまち降参じゃ。はっはっは。" },
+  { name:"坂本龍馬",   sub:"おなじ土佐", rel:"親せき",   x:610, y:120,
+    c:"坂本龍馬とは、じつは親せきにあたる。おなじ土佐の生まれでな。世を変えようと走りまわった、まことに痛快な男であったよ。" },
+  { name:"武市瑞山",   sub:"勤王党",   rel:"親せき",     x:700, y:280,
+    c:"武市瑞山も、わしの親せきじゃ。土佐勤王党をひきいた人物でな。天皇をうやまう志を、ともにした仲よ。" },
+  { name:"西郷隆盛",   sub:"薩摩",     rel:"盟友・薩土密約", x:610, y:440,
+    c:"西郷どんは、薩土密約をむすんだ盟友よ。じゃが西南戦争でやぶれ命を落とした。その死から、わしは『これからは言論で戦う』と心にちかったのじゃ。" },
+  { name:"大隈重信",   sub:"政党内閣", rel:"ともに内閣",   x:380, y:500,
+    c:"大隈重信は、よきライバルにして盟友よ。のちに早稲田大学をつくった人物じゃ。ともに日本初の政党内閣をつくったのよ。" },
+  { name:"後藤新平",   sub:"医者→政治家", rel:"岐阜で手当て", x:150, y:440,
+    c:"岐阜で刺されたわしを手当てしてくれた、若き医者じゃ。わしはその才を見ぬいた。後藤新平は、のちにほんとうに大政治家となったのよ。" },
+  { name:"相原尚褧",   sub:"岐阜事件", rel:"おそった犯人",  x:60,  y:280,
+    c:"岐阜でわしをおそった男よ。自由党をきらってのことじゃった。じゃが、刃物ではわしの信念はくじけぬ。自由もまた、死ななんだのよ。" },
+  { name:"山内容堂",   sub:"土佐藩主", rel:"主君",        x:150, y:120,
+    c:"土佐藩の殿さま、山内容堂じゃ。なかなかのうつわの人物でな。わしの物おじせぬ気性を、よく見ぬいてくださった。" },
+  { name:"板垣信方",   sub:"武田の重臣", rel:"ご先祖",     x:380, y:165, near:true,
+    c:"わしのご先祖、板垣信方よ。あの武田信玄につかえた重臣じゃ。その由緒ある名をうけついだことが、わしの誇りであったのよ。" },
+  { name:"中岡慎太郎", sub:"志士",     rel:"同志",        x:540, y:280, near:true,
+    c:"中岡慎太郎は、じつはかつてわしを暗殺しようとした男よ。それを正直にうちあけた度胸を、わしは買うた。『それでこそ天下を語れる』とな。よき同志となったのじゃ。" }
+];
+const linesG=document.getElementById('skLines');
+const nodesG=document.getElementById('skNodes');
+const SVGNS="http://www.w3.org/2000/svg";
+function svg(tag,attrs){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+// 線と関係ラベル
+SK_NODES.forEach(n=>{
+  linesG.appendChild(svg('line',{x1:CX,y1:CY,x2:n.x,y2:n.y,class:'sk-line'}));
+  const mx=(CX+n.x)/2, my=(CY+n.y)/2;
+  const t=svg('text',{x:mx,y:my-4,class:'sk-rel','text-anchor':'middle'}); t.textContent=n.rel;
+  linesG.appendChild(t);
+});
+
+// まわりの人物ノード（クリックでコメント）
+SK_NODES.forEach(n=>{
+  const g=svg('g',{class:'sk-clickable'});
+  g.appendChild(svg('circle',{cx:n.x,cy:n.y,r:46,class:'sk-node'}));
+  const nm=svg('text',{x:n.x,y:n.y-2,class:'sk-name','font-size':'17'}); nm.textContent=n.name;
+  const sb=svg('text',{x:n.x,y:n.y+18,class:'sk-sub'}); sb.textContent=n.sub;
+  g.append(nm,sb);
+  g.style.cursor='pointer';
+  g.addEventListener('click',()=>speak(n.c));
+  nodesG.appendChild(g);
+});
+
+// 中心ノード（板垣退助・クリックで案内）
+const cg=svg('g',{class:'sk-clickable'});
+cg.appendChild(svg('circle',{cx:CX,cy:CY,r:62,class:'sk-node-c'}));
+const cn=svg('text',{x:CX,y:CY-4,class:'sk-cname','font-size':'24'}); cn.textContent="板垣退助";
+const cs=svg('text',{x:CX,y:CY+20,class:'sk-sub','font-size':'13'}); cs.textContent="国会を創った男";
+cg.append(cn,cs);
+cg.style.cursor='pointer';
+cg.addEventListener('click',()=>speak("わしが板垣退助じゃ! まわりの人を押してみよ。その者とわしの縁（えん）を、語ってやろうぞ。"));
+nodesG.appendChild(cg);
+
+// ===== クラス国会 =====
+const KK_EXAMPLES = [
+  "給食のおかわりは じゃんけんで決めよう",
+  "そうじの音楽を 流そう",
+  "席がえは くじびきにしよう",
+  "宿題のない日を つくろう",
+  "クラスのめあてを 「あいさつ」にしよう",
+  "係(かかり)を ふやそう"
+];
+const kkSetup=document.getElementById('kkSetup');
+const kkVote=document.getElementById('kkVote');
+const kkResult=document.getElementById('kkResult');
+let kkVotes={a:0,b:0}, kkTopic="", kkLabelA="賛成", kkLabelB="反対";
+
+// 議題のれいチップ
+const kkExChips=document.getElementById('kkExChips');
+KK_EXAMPLES.forEach(s=>{
+  const b=document.createElement('button'); b.className='chip'; b.textContent=s;
+  b.onclick=()=>{ document.getElementById('kkTopic').value=s; };
+  kkExChips.appendChild(b);
+});
+
+function kkShow(which){
+  kkSetup.style.display = which==='setup' ? 'block':'none';
+  kkVote.style.display  = which==='vote'  ? 'block':'none';
+  kkResult.style.display= which==='result'? 'block':'none';
+}
+function kkUpdate(){
+  document.getElementById('kkTallyA').textContent=kkVotes.a;
+  document.getElementById('kkTallyB').textContent=kkVotes.b;
+  document.getElementById('kkTotal').textContent="合計 "+(kkVotes.a+kkVotes.b)+"ひょう";
+}
+
+document.getElementById('kkStart').onclick=()=>{
+  const topic=document.getElementById('kkTopic').value.trim();
+  kkLabelA=(document.getElementById('kkA').value.trim()||"賛成");
+  kkLabelB=(document.getElementById('kkB').value.trim()||"反対");
+  if(!topic){ speak("おっと、まず議題(ぎだい)を決めねば始まらぬぞ。みなで決めたいことを、ますに入れてくれ。"); return; }
+  kkTopic=topic; kkVotes={a:0,b:0};
+  document.getElementById('kkTopicShow').textContent="議題："+topic;
+  document.getElementById('kkNameA').textContent=kkLabelA;
+  document.getElementById('kkNameB').textContent=kkLabelB;
+  kkUpdate(); kkShow('vote');
+  speak("議題は「"+topic+"」じゃな。では、賛成・反対を数えよう。「"+kkLabelA+"の人?」「"+kkLabelB+"の人?」と聞いて、手をあげた数だけボタンを押すがよい。");
+};
+
+document.querySelectorAll('.kk-plus').forEach(b=>{
+  b.onclick=()=>{ kkVotes[b.dataset.side]++; kkUpdate(); };
+});
+document.querySelectorAll('.kk-minus').forEach(b=>{
+  b.onclick=()=>{ const s=b.dataset.side; if(kkVotes[s]>0){kkVotes[s]--; kkUpdate();} };
+});
+
+document.getElementById('kkReset').onclick=()=>{ kkShow('setup'); speak("べつの議題じゃな。よし、新しいことを決めようぞ。"); };
+document.getElementById('kkReset2').onclick=()=>{ kkShow('setup'); speak("べつの議題じゃな。よし、新しいことを決めようぞ。"); };
+document.getElementById('kkAgain').onclick=()=>{
+  kkVotes={a:0,b:0}; kkUpdate(); kkShow('vote');
+  speak("おなじ議題で、もう一度数えてみよう。考えが変わった者もおるかもしれぬからな。");
+};
+
+document.getElementById('kkDecide').onclick=()=>{
+  const a=kkVotes.a, b=kkVotes.b, total=a+b;
+  if(total===0){ speak("おや、まだ一票も入っておらぬぞ。手をあげた数だけ、ボタンを押してから採決(さいけつ)じゃ。"); return; }
+  document.getElementById('kkResTopic').textContent="議題："+kkTopic;
+  const pa=Math.round(a/total*100), pb=Math.round(b/total*100);
+  document.getElementById('kkBars').innerHTML=`
+    <div class="kk-bar-row">
+      <div class="kk-bar-top"><span>${kkLabelA}</span><span>${a}ひょう（${pa}％）</span></div>
+      <div class="kk-bar-track"><div class="kk-bar-fill a" style="width:0%"></div></div>
+    </div>
+    <div class="kk-bar-row">
+      <div class="kk-bar-top"><span>${kkLabelB}</span><span>${b}ひょう（${pb}％）</span></div>
+      <div class="kk-bar-track"><div class="kk-bar-fill b" style="width:0%"></div></div>
+    </div>`;
+  // バーをアニメーションでのばす
+  requestAnimationFrame(()=>{
+    const fills=document.querySelectorAll('#kkBars .kk-bar-fill');
+    fills[0].style.width=pa+"%"; fills[1].style.width=pb+"%";
+  });
+
+  let verdict, comment;
+  if(a>b){
+    verdict=`「${kkLabelA}」に きまり！（${a}対${b}）`;
+    comment=`採決の結果、「${kkLabelA}」が多数(たすう)で可決(かけつ)じゃ! ${total}人のうち${a}人が手をあげた。これが多数決(たすうけつ)――みなの声で決める政治よ。`;
+    faceEl.classList.remove('zannen'); faceEl.classList.add('seikai');
+  }else if(b>a){
+    verdict=`「${kkLabelB}」に きまり！（${b}対${a}）`;
+    comment=`採決の結果、「${kkLabelB}」が多数(たすう)で可決(かけつ)じゃ! ${total}人のうち${b}人が手をあげた。これが多数決(たすうけつ)――みなの声で決める政治よ。`;
+    faceEl.classList.remove('zannen'); faceEl.classList.add('seikai');
+  }else{
+    verdict=`同数(どうすう)！（${a}対${b}）`;
+    comment=`なんと同数(どうすう)じゃ! こういうときこそ、もう一度よく話しあうのが大事よ。数で決めるだけでなく、少ない方の意見にも耳をかたむける――それが、ほんとうの自由と民権の心じゃ。`;
+  }
+  document.getElementById('kkVerdict').textContent=verdict;
+  kkShow('result');
+  speak(comment);
+  setTimeout(()=>faceEl.classList.remove('seikai','zannen'),2600);
+};
+
+// 最初のあいさつ
+speak(GREET);
+</script>
+</body>
+</html>
